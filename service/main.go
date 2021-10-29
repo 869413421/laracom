@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	pb "github.com/869413421/laracom/service/proto/demo"
 	"github.com/micro/go-micro/v2"
 	"log"
-	pb "service/proto/demo"
 )
 
 const (

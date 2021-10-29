@@ -1,4 +1,4 @@
-module service
+module github.com/869413421/laracom/service
 
 go 1.16
 
