@@ -6,6 +6,7 @@ ENV GOPROXY https://goproxy.cn
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 RUN apk --no-cache add git
+RUN git config --global --add url."git@github.com:".insteadOf "https://github.com/"
 
 WORKDIR /app/laracom-user-cli
 
