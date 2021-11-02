@@ -37,7 +37,8 @@ func (repo *UserRepository) Get(id string) (*pb.User, error) {
 // GetByEmail 根据邮箱获取
 func (repo *UserRepository) GetByEmail(email string) (*pb.User, error) {
 	user := &pb.User{}
-	if err := repo.Db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := repo.Db.Where("email = ?", email).
+		First(&user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil

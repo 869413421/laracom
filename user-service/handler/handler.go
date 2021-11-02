@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	pb "github.com/869413421/laracom/user-service/proto/user"
 	"github.com/869413421/laracom/user-service/repo"
 	"github.com/869413421/laracom/user-service/service"
@@ -51,6 +52,8 @@ func (srv *UserService) Auth(ctx context.Context, request *pb.User, response *pb
 	log.Println("Logging in with:", request.Email, request.Password)
 	user, err := srv.Repo.GetByEmail(request.Email)
 	if err != nil {
+		fmt.Println(user)
+		fmt.Println(err)
 		return err
 	}
 
