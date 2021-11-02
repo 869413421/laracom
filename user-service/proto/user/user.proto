@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package laravel.user.service;
-option go_package = "proto/user";
+package laracom.user.service;
+option go_package = "laracom_service_user";
 
 service UserService {
   rpc Create(User) returns (Response) {}

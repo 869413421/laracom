@@ -27,7 +27,7 @@ func main() {
 	srvHandler := &handler.UserService{Repo: repo, Token: token}
 
 	//3.创建微服务
-	srv := micro.NewService(micro.Name("laravel.user.service"), micro.Version("latest"))
+	srv := micro.NewService(micro.Name("laracom.user.service"), micro.Version("latest"))
 	srv.Init()
 
 	//4.注册服务
