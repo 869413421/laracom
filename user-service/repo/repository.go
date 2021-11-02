@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	Create(user pb.User) error
+	Create(user *pb.User) error
 	Get(id string) (*pb.User, error)
 	GetByEmail(email string) (*pb.User, error)
 	GetAll() ([]*pb.User, error)

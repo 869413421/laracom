@@ -6,6 +6,7 @@ import (
 	"github.com/869413421/laracom/user-service/handler"
 	pb "github.com/869413421/laracom/user-service/proto/user"
 	repo "github.com/869413421/laracom/user-service/repo"
+	"github.com/869413421/laracom/user-service/service"
 	"github.com/micro/go-micro/v2"
 	"log"
 )
@@ -21,8 +22,9 @@ func main() {
 
 	//2.执行数据库迁移
 	db.AutoMigrate(&pb.User{})
-	repo := &repo.UserRepository{Db: db}
-	srvHandler := &handler.UserService{Repo: repo}
+	repo := repo.UserRepository{Db: db}
+	token := &service.TokenService{Repo: &repo}
+	srvHandler := &handler.UserService{Repo: repo, Token: token}
 
 	//3.创建微服务
 	srv := micro.NewService(micro.Name("laravel.user.service"), micro.Version("latest"))
