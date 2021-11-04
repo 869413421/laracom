@@ -56,6 +56,8 @@ services:
       - laracom-user-service
     ports:
       - 8081:8080
+      - 8082:8082
     command: api --handler=rpc --namespace=laracom.service
+    command: web
 volumes:
   db_data: { }
