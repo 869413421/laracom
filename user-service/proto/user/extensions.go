@@ -1,7 +1,8 @@
 package laracom_service_user
 
+import "github.com/jinzhu/gorm"
+
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 )
 
