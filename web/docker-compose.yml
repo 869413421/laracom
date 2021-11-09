@@ -34,11 +34,12 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_DATABASE: homestead
-      MYSQL_ROOT_PASSWORD: Ym135168.
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      MYSQL_USER: "test"
+      MYSQL_PASSWORD: "test"
+      MYSQL_DATABASE: "laracom"
       MYSQL_ROOT_PASSWORD: "root"
+      SERVICE_NAME: mysql
+      SERVICE_TAGS: dev
     volumes:
       - ./dbdata:/var/lib/mysql
     networks:
