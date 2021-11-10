@@ -14,6 +14,7 @@ services:
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
+      - microservice
   webserver:
     image: nginx:alpine
     container_name: webserver
@@ -26,6 +27,7 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
       - app-network
+      - microservice
   db:
     image: mysql:latest
     container_name: db
@@ -47,6 +49,8 @@ services:
 networks:
   app-network:
     driver: bridge
+  microservice:
+    external: true
 volumes:
   dbdata:
     driver: local

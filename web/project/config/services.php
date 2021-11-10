@@ -35,7 +35,7 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
     'micro' => [
-        'api_gateway' => env('MICRO_API_GATEWAY', 'http://localhost:8081'),
+        'api_gateway' => env('MICRO_API_GATEWAY', 'http://laracom-micro-api:8080'),
         'timeout' => env('MICRO_TIMEOUT', 3.0)
     ]
 

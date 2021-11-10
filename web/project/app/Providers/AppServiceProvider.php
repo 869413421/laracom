@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\MicroApi\Services\UserService;
 use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider;
+
+use function foo\func;
 
 // use Laravel\Cashier\Cashier;
 
@@ -37,6 +40,11 @@ class AppServiceProvider extends ServiceProvider
                     ]
                 ]
             );
+        });
+
+        // µ¥Àý°ó¶¨microApiService
+        $this->app->singleton('microUserService',function($app){
+            return new UserService();
         });
     }
 }

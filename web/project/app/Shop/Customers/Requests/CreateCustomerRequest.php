@@ -2,6 +2,7 @@
 
 namespace App\Shop\Customers\Requests;
 
+use App\Rules\UniqueEmail;
 use App\Shop\Base\BaseFormRequest;
 
 class CreateCustomerRequest extends BaseFormRequest
@@ -15,7 +16,7 @@ class CreateCustomerRequest extends BaseFormRequest
     {
         return [
             'name' => ['required'],
-            'email' => ['required', 'email', 'unique:customers'],
+            'email' => ['required', 'email', new UniqueEmail],
             'password' => ['required', 'min:8']
         ];
     }
