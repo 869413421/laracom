@@ -13,8 +13,9 @@ import (
 )
 
 type UserService struct {
-	Repo  repo.UserRepository
-	Token service.Authable
+	Repo      repo.UserRepository
+	ResetRepo repo.PasswordResetInterface
+	Token     service.Authable
 }
 
 func (srv *UserService) Get(ctx context.Context, request *pb.User, response *pb.Response) error {
@@ -56,6 +57,26 @@ func (srv *UserService) Create(ctx context.Context, request *pb.User, response *
 	return nil
 }
 
+func (srv *UserService) Update(ctx context.Context, request *pb.User, response *pb.Response) error {
+	if request.Id == "" {
+		return errors.New("用户ID为空")
+	}
+	if request.Password != "" {
+		hashPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+
+		request.Password = string(hashPassword)
+	}
+	if err := srv.Repo.Update(request); err != nil {
+		return err
+	}
+
+	response.User = request
+	return nil
+}
+
 func (srv *UserService) Auth(ctx context.Context, request *pb.User, response *pb.Token) error {
 	//1.根据邮件获取用户
 	log.Println("Logging in with:", request.Email, request.Password)
@@ -82,7 +103,7 @@ func (srv *UserService) Auth(ctx context.Context, request *pb.User, response *pb
 	return nil
 }
 
-func (srv UserService) ValidateToken(ctx context.Context, request *pb.Token, response *pb.Token) error {
+func (srv *UserService) ValidateToken(ctx context.Context, request *pb.Token, response *pb.Token) error {
 	claims, err := srv.Token.Decode(request.Token)
 	if err != nil {
 		return err
@@ -93,6 +114,40 @@ func (srv UserService) ValidateToken(ctx context.Context, request *pb.Token, res
 	}
 
 	response.Valid = true
+
+	return nil
+}
+
+// CreatePasswordReset 创建重置密码记录
+func (srv *UserService) CreatePasswordReset(tx context.Context, request *pb.PasswordReset, response *pb.PasswordResetResponse) error {
+	if request.Email == "" {
+		return errors.New("邮箱不允许为空")
+	}
+
+	if err := srv.ResetRepo.Create(request); err != nil {
+		return err
+	}
+
+	response.PasswordReset = request
+	return nil
+}
+
+// ValidatePasswordResetToken 验证重置密码token
+func (srv *UserService) ValidatePasswordResetToken(tx context.Context, request *pb.Token, response *pb.Token) error {
+	if request.Token == "" {
+		return errors.New("token 不允许为空")
+	}
+
+	_, err := srv.ResetRepo.GetByToken(request.Token)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return err
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		response.Valid = false
+	} else {
+		response.Valid = true
+	}
 
 	return nil
 }

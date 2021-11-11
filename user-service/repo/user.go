@@ -24,6 +24,14 @@ func (repo *UserRepository) Create(user *pb.User) error {
 	return nil
 }
 
+// Update 更新用户信息
+func (repo *UserRepository) Update(user *pb.User) error {
+	if err := repo.Db.Save(user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // Get 根据主键获取
 func (repo *UserRepository) Get(id string) (*pb.User, error) {
 	user := &pb.User{}

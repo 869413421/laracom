@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\MicroApi\Services\UserService;
 use App\Shop\Customers\Customer;
 use App\Shop\Customers\Requests\RegisterCustomerRequest;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterController extends Controller
 {
@@ -62,11 +64,12 @@ class RegisterController extends Controller
      */
     public function register(RegisterCustomerRequest $request)
     {
-        $data  = $request->except('_method', '_token');
-        $user  = $this->create($data);
-        $token = $this->userService->auth($data);
-        session([md5($token) => $user]);
-
-        return redirect()->route('user.profile')->cookie('jwt-token', $token);
+        $data = $request->except('_method', '_token');
+        if ($user = $this->create($data)) {
+            $token = Auth::login($data);
+            return redirect()->route('user.profile')->cookie('jwt_token', $token);
+        } else {
+            throw new AuthenticationException('◊¢≤· ß∞‹£¨«Î÷ÿ ‘');
+        }
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+use App\MicroApi\Items\UserItem;
+
 return [
 
     /*
@@ -14,7 +16,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'jwt',
         'passwords' => 'users',
     ],
 
@@ -56,6 +58,11 @@ return [
             'driver' => 'token',
             'provider' => 'users',
         ],
+
+        'jwt' => [
+            'driver' => 'jwt',
+            'provider' => 'micro_user',
+        ],
     ],
 
     /*
@@ -85,6 +92,12 @@ return [
              'driver' => 'eloquent',
              'model' => App\Shop\Employees\Employee::class,
          ],
+
+        'micro_user' => [
+            'driver' => 'micro',
+            'model' => UserItem::class,
+        ],
+
     ],
 
     /*

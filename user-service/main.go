@@ -22,9 +22,11 @@ func main() {
 
 	//2.执行数据库迁移
 	db.AutoMigrate(&pb.User{})
-	repo := repo.UserRepository{Db: db}
-	token := &service.TokenService{Repo: &repo}
-	srvHandler := &handler.UserService{Repo: repo, Token: token}
+	db.AutoMigrate(&pb.PasswordReset{})
+	userRepo := repo.UserRepository{Db: db}
+	token := &service.TokenService{Repo: &userRepo}
+	resetRepo := &repo.PasswordResetRepository{Db: db}
+	srvHandler := &handler.UserService{Repo: userRepo, Token: token,ResetRepo: resetRepo}
 
 	//3.创建微服务
 	srv := micro.NewService(micro.Name("laracom.service.user"), micro.Version("latest"))

@@ -11,6 +11,7 @@
         "binarytorch/larecipe": "^2.4",
         "doctrine/dbal": "^3.1",
         "fideloper/proxy": "^4.4",
+        "firebase/php-jwt": "^5.5",
         "fruitcake/laravel-cors": "^2.0",
         "gloudemans/shoppingcart": "dev-laravel-8",
         "guzzlehttp/guzzle": "^7.0.1",

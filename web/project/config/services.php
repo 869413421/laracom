@@ -20,7 +20,7 @@ return [
     ],
 
     'ses' => [
-        'key' => env('SES_KEY'),
+        'key'    => env('SES_KEY'),
         'secret' => env('SES_SECRET'),
         'region' => 'us-east-1',
     ],
@@ -30,13 +30,15 @@ return [
     ],
 
     'stripe' => [
-        'model' => App\Shop\Customers\Customer::class,
-        'key' => env('STRIPE_KEY'),
+        'model'  => App\Shop\Customers\Customer::class,
+        'key'    => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],
-    'micro' => [
-        'api_gateway' => env('MICRO_API_GATEWAY', 'http://laracom-micro-api:8080'),
-        'timeout' => env('MICRO_TIMEOUT', 3.0)
+    'micro'  => [
+        'api_gateway'    => env('MICRO_API_GATEWAY', 'http://laracom-micro-api:8080'),
+        'timeout'        => env('MICRO_TIMEOUT', 3.0),
+        'jwt_key'        => env('MICRO_JWT_KEY', 'laracomUserTokenKeySecret'),
+        'jwt_algorithms' => env('MICRO_JWT_ALGORITHMS', 'HS256'),
     ]
 
 ];
