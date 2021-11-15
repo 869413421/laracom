@@ -19,11 +19,12 @@ class PasswordBrokerManager extends BasePasswordBrokerManager
 
     public function sendResetLink(array $credentials, Closure $callback = null)
     {
-        // TODO: Implement sendResetLink() method.
+        dd("link");
+        return static::RESET_LINK_SENT;
     }
 
     public function reset(array $credentials, Closure $callback)
     {
-        // TODO: Implement reset() method.
+        dd("reset");
     }
 }

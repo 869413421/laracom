@@ -17,7 +17,7 @@ return [
 
     'defaults' => [
         'guard' => 'jwt',
-        'passwords' => 'users',
+        'passwords' => 'service',
     ],
 
     /*
@@ -127,6 +127,10 @@ return [
             'table' => 'password_resets',
             'expire' => 60,
         ],
+
+        'service' => [
+            'provider' => 'micro_user',
+        ]
     ],
 
 ];
