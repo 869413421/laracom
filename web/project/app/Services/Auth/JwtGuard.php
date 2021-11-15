@@ -5,9 +5,9 @@ namespace App\Services\Auth;
 use App\MicroApi\Items\UserItem;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Http\Request;
 
 class JwtGuard implements Guard
 {
@@ -19,6 +19,11 @@ class JwtGuard implements Guard
      * @var \Illuminate\Http\Request
      */
     protected $request;
+
+    /**
+     * @var bool
+     */
+    protected $loggedOut;
 
     /**
      * The name of the query string item from the request containing the API token.
@@ -37,17 +42,18 @@ class JwtGuard implements Guard
     /**
      * Create a new authentication guard.
      *
-     * @param  \Illuminate\Contracts\Auth\UserProvider  $provider
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $inputKey
-     * @param  string  $storageKey
+     * @param \Illuminate\Contracts\Auth\UserProvider $provider
+     * @param \Illuminate\Http\Request                $request
+     * @param string                                  $inputKey
+     * @param string                                  $storageKey
+     *
      * @return void
      */
     public function __construct(UserProvider $provider, Request $request, $inputKey = 'jwt_token', $storageKey = 'jwt_token')
     {
-        $this->request = $request;
-        $this->provider = $provider;
-        $this->inputKey = $inputKey;
+        $this->request    = $request;
+        $this->provider   = $provider;
+        $this->inputKey   = $inputKey;
         $this->storageKey = $storageKey;
     }
 
@@ -65,7 +71,7 @@ class JwtGuard implements Guard
             return $this->user;
         }
 
-        $user = null;
+        $user  = null;
         $token = $this->getTokenForRequest();
 
         if (!empty($token)) {
@@ -78,18 +84,16 @@ class JwtGuard implements Guard
     /**
      * Attempt to authenticate a user using the given credentials.
      *
-     * @param  array  $credentials
-     * @return Authenticatable|null
+     * @param array $credentials
+     *
+     * @return bool|Authenticatable|null
      */
     public function login(array $credentials)
     {
-        $token = $this->provider->retrieveByCredentials($credentials);
+        $user = $this->provider->retrieveByCredentials($credentials);
 
-        // If an implementation of UserInterface was returned, we'll ask the provider
-        // to validate the user against the given credentials, and if they are in
-        // fact valid we'll log the users into the application and return true.
-        if ($token) {
-            $user = $this->provider->retrieveByToken(null, $token);
+        $token = null;
+        if ($user && $token = $this->provider->validateCredentials($user, $credentials)) {
             $this->setUser($user);
         }
 
@@ -123,7 +127,8 @@ class JwtGuard implements Guard
     /**
      * Validate a user's credentials.
      *
-     * @param  array  $credentials
+     * @param array $credentials
+     *
      * @return bool
      */
     public function validate(array $credentials = [])
@@ -144,7 +149,8 @@ class JwtGuard implements Guard
     /**
      * Set the current request instance.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
+     *
      * @return $this
      */
     public function setRequest(Request $request)
@@ -152,5 +158,11 @@ class JwtGuard implements Guard
         $this->request = $request;
 
         return $this;
+    }
+
+    public function logout()
+    {
+        $this->user      = null;
+        $this->loggedOut = true;
     }
 }

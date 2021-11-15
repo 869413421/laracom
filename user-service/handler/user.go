@@ -151,3 +151,23 @@ func (srv *UserService) ValidatePasswordResetToken(tx context.Context, request *
 
 	return nil
 }
+
+// DeletePasswordReset 删除重置密码记录
+func (srv *UserService) DeletePasswordReset(tx context.Context, request *pb.PasswordReset, response *pb.PasswordResetResponse) error {
+	if request.Email == "" {
+		return errors.New("邮箱 不允许为空")
+	}
+
+	reset, err := srv.ResetRepo.GetByEmail(request.Email)
+	if err != nil {
+		return err
+	}
+	fmt.Println(reset)
+	if err = srv.ResetRepo.Delete(reset); err != nil {
+		return err
+	}
+
+	response.PasswordReset = nil
+
+	return nil
+}

@@ -4,10 +4,15 @@
 namespace App\MicroApi\Items;
 
 
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContracts;
+use Illuminate\Notifications\RoutesNotifications;
 
-class UserItem implements Authenticatable
+class UserItem implements Authenticatable, CanResetPasswordContracts
 {
+    use RoutesNotifications, CanResetPassword;
+
     public $id;
     public $name;
     public $email;
