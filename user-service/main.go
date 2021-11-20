@@ -4,6 +4,7 @@ import (
 	"fmt"
 	db "github.com/869413421/laracom/user-service/db"
 	"github.com/869413421/laracom/user-service/handler"
+	"github.com/869413421/laracom/user-service/model"
 	pb "github.com/869413421/laracom/user-service/proto/user"
 	repo "github.com/869413421/laracom/user-service/repo"
 	"github.com/869413421/laracom/user-service/service"
@@ -21,8 +22,8 @@ func main() {
 	}
 
 	//2.执行数据库迁移
-	db.AutoMigrate(&pb.User{})
-	db.AutoMigrate(&pb.PasswordReset{})
+	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.PasswordReset{})
 	userRepo := repo.UserRepository{Db: db}
 	token := &service.TokenService{Repo: &userRepo}
 	resetRepo := &repo.PasswordResetRepository{Db: db}

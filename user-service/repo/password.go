@@ -1,16 +1,15 @@
 package repo
 
 import (
-	"fmt"
-	pb "github.com/869413421/laracom/user-service/proto/user"
+	. "github.com/869413421/laracom/user-service/model"
 	"github.com/jinzhu/gorm"
 )
 
 type PasswordResetInterface interface {
-	Create(reset *pb.PasswordReset) error
-	Delete(reset *pb.PasswordReset) error
-	GetByToken(token string) (*pb.PasswordReset, error)
-	GetByEmail(email string) (*pb.PasswordReset, error)
+	Create(reset *PasswordReset) error
+	Delete(reset *PasswordReset) error
+	GetByToken(token string) (*PasswordReset, error)
+	GetByEmail(email string) (*PasswordReset, error)
 }
 
 type PasswordResetRepository struct {
@@ -18,7 +17,7 @@ type PasswordResetRepository struct {
 }
 
 // Create 创建获取记录
-func (repo *PasswordResetRepository) Create(reset *pb.PasswordReset) error {
+func (repo *PasswordResetRepository) Create(reset *PasswordReset) error {
 	if err := repo.Db.Create(reset).Error; err != nil {
 		return err
 	}
@@ -26,8 +25,8 @@ func (repo *PasswordResetRepository) Create(reset *pb.PasswordReset) error {
 }
 
 // GetByToken 根据token获取重置记录
-func (repo *PasswordResetRepository) GetByToken(token string) (*pb.PasswordReset, error) {
-	reset := &pb.PasswordReset{}
+func (repo *PasswordResetRepository) GetByToken(token string) (*PasswordReset, error) {
+	reset := &PasswordReset{}
 	if err := repo.Db.Where("token = ?", token).First(reset).Error; err != nil {
 		return nil, err
 	}
@@ -36,8 +35,8 @@ func (repo *PasswordResetRepository) GetByToken(token string) (*pb.PasswordReset
 }
 
 // GetByEmail 根据emil获取重置记录
-func (repo *PasswordResetRepository) GetByEmail(email string) (*pb.PasswordReset, error) {
-	reset := &pb.PasswordReset{}
+func (repo *PasswordResetRepository) GetByEmail(email string) (*PasswordReset, error) {
+	reset := &PasswordReset{}
 	if err := repo.Db.Where("email = ?", email).First(reset).Error; err != nil {
 		return nil, err
 	}
@@ -46,8 +45,7 @@ func (repo *PasswordResetRepository) GetByEmail(email string) (*pb.PasswordReset
 }
 
 // Delete 删除重置记录
-func (repo *PasswordResetRepository) Delete(reset *pb.PasswordReset) error {
-	fmt.Println(reset)
-	err := repo.Db.Debug().Delete(&reset).Error
+func (repo *PasswordResetRepository) Delete(reset *PasswordReset) error {
+	err := repo.Db.Delete(&reset).Error
 	return err
 }

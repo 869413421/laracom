@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/869413421/laracom/user-service/model"
 	pb "github.com/869413421/laracom/user-service/proto/user"
 	"github.com/869413421/laracom/user-service/repo"
 	"github.com/869413421/laracom/user-service/service"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"strconv"
 )
 
 type UserService struct {
@@ -19,11 +21,13 @@ type UserService struct {
 }
 
 func (srv *UserService) Get(ctx context.Context, request *pb.User, response *pb.Response) error {
-	var user *pb.User
+	var user *model.User
 	var err error
 	fmt.Println(request)
 	if request.Id != "" {
-		user, err = srv.Repo.Get(request.Id)
+
+		id, _ := strconv.ParseUint(request.Id, 10, 64)
+		user, err = srv.Repo.Get(uint(id))
 	}
 	if request.Email != "" {
 		user, err = srv.Repo.GetByEmail(request.Email)
@@ -31,7 +35,9 @@ func (srv *UserService) Get(ctx context.Context, request *pb.User, response *pb.
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
-	response.User = user
+	if user != nil {
+		response.User, _ = user.ToProtobuf()
+	}
 	return nil
 }
 
@@ -40,7 +46,12 @@ func (srv *UserService) GetAll(ctx context.Context, request *pb.Request, respons
 	if err != nil {
 		return err
 	}
-	response.Users = users
+	userItems := make([]*pb.User, len(users))
+	for index, user := range users {
+		userItem, _ := user.ToProtobuf()
+		userItems[index] = userItem
+	}
+	response.Users = userItems
 	return nil
 }
 
@@ -50,30 +61,37 @@ func (srv *UserService) Create(ctx context.Context, request *pb.User, response *
 		return err
 	}
 	request.Password = string(hashPassword)
-	if err := srv.Repo.Create(request); err != nil {
+	userModel := &model.User{}
+	user, _ := userModel.ToORM(request)
+	if err := srv.Repo.Create(user); err != nil {
 		return err
 	}
-	response.User = request
+	response.User, _ = user.ToProtobuf()
 	return nil
 }
 
 func (srv *UserService) Update(ctx context.Context, request *pb.User, response *pb.Response) error {
-	if request.Id == "" {
-		return errors.New("用户ID为空")
-	}
 	if request.Password != "" {
-		hashPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+		// 如果密码字段不为空的话对密码进行哈希加密
+		hashedPass, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
-
-		request.Password = string(hashPassword)
+		request.Password = string(hashedPass)
 	}
-	if err := srv.Repo.Update(request); err != nil {
+	if request.Id == "" {
+		return errors.New("用户 ID 不能为空")
+	}
+	id, _ := strconv.ParseUint(request.Id, 10, 64)
+	user, _ := srv.Repo.Get(uint(id))
+	if user == nil {
+		return errors.New("用户不存在")
+	}
+	user, _ = user.ToORM(request)
+	if err := srv.Repo.Update(user); err != nil {
 		return err
 	}
-
-	response.User = request
+	response.User, _ = user.ToProtobuf()
 	return nil
 }
 
@@ -94,7 +112,8 @@ func (srv *UserService) Auth(ctx context.Context, request *pb.User, response *pb
 	}
 
 	//3.生成token
-	token, err := srv.Token.Encode(user)
+	pbUser, _ := user.ToProtobuf()
+	token, err := srv.Token.Encode(pbUser)
 	if err != nil {
 		return err
 	}
@@ -124,11 +143,14 @@ func (srv *UserService) CreatePasswordReset(tx context.Context, request *pb.Pass
 		return errors.New("邮箱不允许为空")
 	}
 
-	if err := srv.ResetRepo.Create(request); err != nil {
+	resetModel := &model.PasswordReset{}
+	reset, _ := resetModel.ToORM(request)
+
+	if err := srv.ResetRepo.Create(reset); err != nil {
 		return err
 	}
 
-	response.PasswordReset = request
+	response.PasswordReset, _ = reset.ToProtobuf()
 	return nil
 }
 
@@ -162,7 +184,7 @@ func (srv *UserService) DeletePasswordReset(tx context.Context, request *pb.Pass
 	if err != nil {
 		return err
 	}
-	fmt.Println(reset)
+
 	if err = srv.ResetRepo.Delete(reset); err != nil {
 		return err
 	}
