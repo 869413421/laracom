@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/869413421/laracom/user-service/model"
@@ -9,15 +10,19 @@ import (
 	"github.com/869413421/laracom/user-service/repo"
 	"github.com/869413421/laracom/user-service/service"
 	"github.com/jinzhu/gorm"
+	"github.com/micro/go-micro/v2/broker"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"strconv"
 )
 
+const topic = "password.reset"
+
 type UserService struct {
 	Repo      repo.UserRepository
 	ResetRepo repo.PasswordResetInterface
 	Token     service.Authable
+	PubSub    broker.Broker
 }
 
 func (srv *UserService) Get(ctx context.Context, request *pb.User, response *pb.Response) error {
@@ -139,18 +144,26 @@ func (srv *UserService) ValidateToken(ctx context.Context, request *pb.Token, re
 
 // CreatePasswordReset 创建重置密码记录
 func (srv *UserService) CreatePasswordReset(tx context.Context, request *pb.PasswordReset, response *pb.PasswordResetResponse) error {
+	//1.检验邮箱
 	if request.Email == "" {
 		return errors.New("邮箱不允许为空")
 	}
 
+	//2.创建重置记录
 	resetModel := &model.PasswordReset{}
 	reset, _ := resetModel.ToORM(request)
-
 	if err := srv.ResetRepo.Create(reset); err != nil {
 		return err
 	}
 
+	//3.发布消息到消息系统
 	response.PasswordReset, _ = reset.ToProtobuf()
+	if response.PasswordReset != nil {
+		err := srv.publishEvent(response.PasswordReset)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -190,6 +203,32 @@ func (srv *UserService) DeletePasswordReset(tx context.Context, request *pb.Pass
 	}
 
 	response.PasswordReset = nil
+
+	return nil
+}
+
+// publishEvent 发布重置密码事件
+func (srv *UserService) publishEvent(reset *pb.PasswordReset) error {
+	//1.JSON 编码
+	body, err := json.Marshal(reset)
+	if err != nil {
+		return err
+	}
+
+	//2.构建broker消息
+	msg := &broker.Message{
+		Header: map[string]string{
+			"email": reset.Email,
+		},
+		Body: body,
+	}
+
+	//3.通过broker 发布消息到消息系统
+	err = srv.PubSub.Publish(topic, msg)
+	if err != nil {
+		log.Printf("[pub] failed: %v", err)
+		return err
+	}
 
 	return nil
 }

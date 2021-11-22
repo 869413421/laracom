@@ -24,14 +24,17 @@ func main() {
 	//2.执行数据库迁移
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.PasswordReset{})
+
+	//3.构建服务所需要参数
 	userRepo := repo.UserRepository{Db: db}
 	token := &service.TokenService{Repo: &userRepo}
 	resetRepo := &repo.PasswordResetRepository{Db: db}
-	srvHandler := &handler.UserService{Repo: userRepo, Token: token,ResetRepo: resetRepo}
-
-	//3.创建微服务
 	srv := micro.NewService(micro.Name("laracom.service.user"), micro.Version("latest"))
 	srv.Init()
+	pubSub := srv.Server().Options().Broker
+	srvHandler := &handler.UserService{Repo: userRepo, Token: token, ResetRepo: resetRepo, PubSub: pubSub}
+
+	//3.创建微服务
 
 	//4.注册服务
 	pb.RegisterUserServiceHandler(srv.Server(), srvHandler)

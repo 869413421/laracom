@@ -9,7 +9,7 @@ COPY project ./
 
 COPY project/.env.example ./.env
 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 ENV NVM_DIR=/root/.nvm
 
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
