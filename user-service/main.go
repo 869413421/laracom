@@ -32,6 +32,13 @@ func main() {
 	srv := micro.NewService(micro.Name("laracom.service.user"), micro.Version("latest"))
 	srv.Init()
 	pubSub := srv.Server().Options().Broker
+	err = pubSub.Connect()
+	if err != nil {
+		fmt.Println("连接nats错误")
+		fmt.Println(err)
+		return
+	}
+	defer pubSub.Disconnect()
 	srvHandler := &handler.UserService{Repo: userRepo, Token: token, ResetRepo: resetRepo, PubSub: pubSub}
 
 	//3.创建微服务
