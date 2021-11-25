@@ -2,6 +2,7 @@
 namespace App\Services\Auth;
 
 use Closure;
+use http\Exception\InvalidArgumentException;
 use Illuminate\Auth\Passwords\PasswordBrokerManager as BasePasswordBrokerManager;
 
 class PasswordBrokerManager extends BasePasswordBrokerManager
@@ -26,5 +27,27 @@ class PasswordBrokerManager extends BasePasswordBrokerManager
     public function reset(array $credentials, Closure $callback)
     {
         dd("reset");
+    }
+
+    /**
+     * Resolve the given broker.
+     *
+     * @param  string  $name
+     * @return PasswordBroker
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function resolve($name)
+    {
+        $config = $this->getConfig($name);
+
+        if (is_null($config)) {
+            throw new InvalidArgumentException("ÃÜÂëÖØÖÃÆ÷ [{$name}] Î´¶¨Òå");
+        }
+
+        return new PasswordBroker(
+            $this->createTokenRepository($config),
+            $this->app['auth']->createUserProvider($config['provider'] ?? null)
+        );
     }
 }
