@@ -67,7 +67,7 @@ class RegisterController extends Controller
         $data = $request->except('_method', '_token');
         if ($user = $this->create($data)) {
             $token = Auth::login($data);
-            return redirect()->route('user.profile')->cookie('jwt_token', $token);
+            return redirect()->route('accounts')->cookie('jwt_token', $token);
         } else {
             throw new AuthenticationException('◊¢≤· ß∞‹£¨«Î÷ÿ ‘');
         }

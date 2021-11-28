@@ -62,7 +62,7 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
         if ($token = auth()->login($credentials)) {
             $this->clearLoginAttempts($request);
-            return redirect()->route('user.profile')->cookie('jwt_token', $token);
+            return redirect()->route('accounts')->cookie('jwt_token', $token);
         }
 
         $this->incrementLoginAttempts($request);
