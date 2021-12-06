@@ -18,12 +18,14 @@ services:
   laracom-product-service:
     depends_on:
      - laracom-product-db
+     - laracom-etcd
     build: ./product-service
     ports:
      - 9093:9091
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "laracom-etcd:2379"
       DB_HOST: "laracom-product-db:3306"
       DB_NAME: "laracom_product"
       DB_USER: "product"
@@ -35,12 +37,14 @@ services:
   laracom-user-service:
     depends_on:
       - laracom-user-db
+      - laracom-etcd
     build: ./user-service
     ports:
       - 9092:9091
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "laracom-etcd:2379"
       MICRO_BROKER: "nats"
       MICRO_BROKER_ADDRESS: "laracom-nats:4222"
       DB_HOST: "laracom-user-db:3306"
@@ -92,9 +96,11 @@ services:
     container_name: laracom-micro-api
     image: micro/micro:v2.9.3
     environment:
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "laracom-etcd:2379"
     links:
       - laracom-user-service
+      - laracom-product-service
     ports:
       - 8080:8080
       - 8082:8082
@@ -109,6 +115,17 @@ services:
     restart: always
     networks:
       - microservice
+
+  laracom-etcd:
+      image: bitnami/etcd:latest
+      environment:
+        ALLOW_NONE_AUTHENTICATION: "yes"
+        ETCD_ADVERTISE_CLIENT_URLS: "http://laracom-etcd:2379"
+      ports:
+        - 2379:2379
+        - 2380:2380
+      networks:
+        - microservice
 volumes:
   db_data: { }
   db_product_data: {}
