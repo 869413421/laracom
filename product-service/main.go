@@ -8,8 +8,22 @@ import (
 	pb "github.com/869413421/laracom/product-service/proto/product"
 	"github.com/869413421/laracom/product-service/repo"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/broker/http"
 	"github.com/micro/go-micro/v2/util/log"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	net "net/http"
 )
+
+// prometheusBoot 初始化普罗米修斯
+func prometheusBoot(){
+	http.Handle("/metrics",promhttp.Handler())
+	go func() {
+		err := net.ListenAndServe(":9092", nil)
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
+	}()
+}
 
 func main() {
 	//1.初始化数据库，执行数据迁移
@@ -47,6 +61,7 @@ func main() {
 	pb.RegisterAttributeServiceHandler(srv.Server(), &handler.AttributeService{AttributeRepo: attributeRepo})
 
 	//5.启动服务
+	prometheusBoot()
 	err = srv.Run()
 	if err != nil {
 		fmt.Println(err)
