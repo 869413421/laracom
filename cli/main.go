@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/micro/go-micro/v2/metadata"
-	"github.com/micro/go-micro/v2"
-	traceplugin "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
 	pb "github.com/869413421/laracom/service/proto/demo"
+	"github.com/869413421/laracom/service/trace"
+	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/metadata"
+	traceplugin "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
 	"github.com/opentracing/opentracing-go"
 	"log"
 	"os"
-	"github.com/869413421/laracom/service/trace"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	)
 	service.Init()
 
-	client := pb.NewDemoServiceClient("laracom.service.demo", service.Client())
+	client := pb.NewDemoService("laravel.service.service", service.Client())
 
 	// 创建空的上下文, 生成追踪 span
 	span, ctx := opentracing.StartSpanFromContext(context.Background(), "call")

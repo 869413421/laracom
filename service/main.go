@@ -38,7 +38,7 @@ func main() {
 	opentracing.SetGlobalTracer(t)
 
 	service := micro.NewService(
-		micro.Name("laravel.service.demo"),
+		micro.Name("laracom.service.service"),
 		micro.WrapHandler(traceplugin.NewHandlerWrapper(opentracing.GlobalTracer())), // 基于 jaeger 采集追踪数据
 	)
 	service.Init()
