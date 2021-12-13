@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"github.com/869413421/laracom/common/tracer"
+	"github.com/869413421/laracom/common/wrapper/tracer/opentracing/gin2micro"
 	"github.com/869413421/laracom/service/proto/demo"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/v2/client"
 	"github.com/micro/go-micro/v2/web"
+	"github.com/opentracing/opentracing-go"
 	"log"
+	"os"
 )
 
 var cli demo.DemoService
@@ -38,6 +42,16 @@ func (s *Say) Hello(c *gin.Context) {
 }
 
 func main() {
+
+	// 初始化追踪器
+	gin2micro.SetSamplingFrequency(50)
+	t, io, err := tracer.NewTracer(name, os.Getenv("MICRO_TRACE_SERVER"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer io.Close()
+	opentracing.SetGlobalTracer(t)
+
 	service := web.NewService(
 		web.Name("laracom.api.demo"),
 	)
