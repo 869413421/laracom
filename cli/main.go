@@ -27,7 +27,7 @@ func main() {
 	)
 	service.Init()
 
-	client := pb.NewDemoService("laravel.service.service", service.Client())
+	client := pb.NewDemoService("laracom.service.service", service.Client())
 
 	// 创建空的上下文, 生成追踪 span
 	span, ctx := opentracing.StartSpanFromContext(context.Background(), "call")
