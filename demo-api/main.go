@@ -43,16 +43,20 @@ func main() {
 	)
 	service.Init()
 
-	cli = demo.NewDemoService("laracom.service.demo",client.DefaultClient)
+	cli = demo.NewDemoService("laracom.service.service",client.DefaultClient)
 
 	// Create RESTful handler (using Gin)
 	say := new(Say)
 	router := gin.Default()
 	router.GET("/hello", say.Anything)
 	router.GET("/hello/:name", say.Hello)
+	router.NoRoute(func(c *gin.Context) {
+		c.JSON(200, "111111111111111111111")
+	})
 
 	// Register Handler
 	service.Handle("/", router)
+
 
 	// Run server
 	if err := service.Run(); err != nil {
