@@ -20,7 +20,7 @@ type Say struct {
 func (s *Say) Anything(c *gin.Context) {
 	log.Print("Received Say.Anything API request")
 	c.JSON(200, map[string]string{
-		"message": "你好，学院君",
+		"text": "你好，学院君",
 	})
 }
 
@@ -54,12 +54,15 @@ func main() {
 	defer io.Close()
 	opentracing.SetGlobalTracer(t)
 
+	// Create service
 	service := web.NewService(
 		web.Name(name),
 	)
+
 	service.Init()
 
-	cli = demo.NewDemoService("laracom.service.service",client.DefaultClient)
+	// setup Demo Server Client
+	cli = demo.NewDemoService("laracom.service.service", client.DefaultClient)
 
 	// Create RESTful handler (using Gin)
 	say := new(Say)
@@ -71,7 +74,6 @@ func main() {
 
 	// Register Handler
 	service.Handle("/", router)
-
 
 	// Run server
 	if err := service.Run(); err != nil {

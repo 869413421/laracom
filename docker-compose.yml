@@ -1,111 +1,77 @@
 # docker-compose.yml
+# 指定docker-compose 版本好
 version: '3.3'
 
+# 服务
 services:
-  etcd1:
-    image: bitnami/etcd:latest
-    environment: 
-      ALLOW_NONE_AUTHENTICATION: "yes"
-      ETCD_NAME: "etcd1"
-      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd1:2380"
-      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
-      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
-      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd1:2379"
-      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
-      ETCD_INITIAL_CLUSTER: "etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380"
-      ETCD_INITIAL_CLUSTER_STATE: "new"
-    ports:
-      - 23791:2379
-      - 23801:2380
-    networks:
-      - microservice
-
-  etcd2:
-    image: bitnami/etcd:latest
-    environment: 
-      ALLOW_NONE_AUTHENTICATION: "yes"
-      ETCD_NAME: "etcd2"
-      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd2:2380"
-      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
-      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
-      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd2:2379"
-      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
-      ETCD_INITIAL_CLUSTER: "etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380"
-      ETCD_INITIAL_CLUSTER_STATE: "new"
-    ports:
-      - 23792:2379
-      - 23802:2380
-    networks:
-      - microservice
-
-  etcd3:
-    image: bitnami/etcd:latest
-    environment: 
-      ALLOW_NONE_AUTHENTICATION: "yes"
-      ETCD_NAME: "etcd3"
-      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd3:2380"
-      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
-      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
-      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd3:2379"
-      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
-      ETCD_INITIAL_CLUSTER: "etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380"
-      ETCD_INITIAL_CLUSTER_STATE: "new"
-    ports:
-      - 23793:2379
-      - 23803:2380
-    networks:
-      - microservice
-
-  e3w:
-    image: soyking/e3w:latest
-    ports:
-      - 8088:8080
-    volumes:
-      - ./conf/e3w/config.ini:/app/conf/config.default.ini
-    networks:
-      - microservice
-
-  laracom-cli:
-    build: ./cli
-    depends_on:
-      - jaeger
-    environment:
-      MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "etcd"
-      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-      MICRO_TRACE_SERVER: "jaeger:6831"  
-    networks:
-      - microservice
-
+  # 测试服务
   laracom-service:
-    build: ./service
+    image: laracom/service
+    # 依赖etcd，etcd 创建后拉起
     depends_on:
-      - jaeger
+      - etcd1
+      - etcd2
+      - etcd3
+    environment:
+      # 服务端口
+      MICRO_SERVER_ADDRESS: ":9091"
+      # 指定服务中心
+      MICRO_REGISTEY: "etcd"
+      # etcd注册地址
+      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
     ports:
+      # 映射服务端口
       - 9091:9091
+    networks:
+      # 加入网络并指定别名
+      laracom-network:
+        aliases:
+          - "laracom-service"
+    # docker-Swarm指定节点类型，实例数
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  # 用户服务
+  laracom-user-service:
+    image: laracom/userservice
+    deoebds_on:
+      - laracom-user-db
+      - laracom-nats
+      - etcd1
+      - etcd2
+      - etcd3
+    ports:
+      - 9092:9091
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
       MICRO_REGISTRY: "etcd"
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-      MICRO_TRACE_SERVER: "jaeger:6831"
+      MICRO_BROKER: "nats"
+      MICRO_BROKER_ADDRESS: "laracom-nats:4222"
+      # 用户服务数据库参数
+      DB_HOST: "laracom-user-db:3306"
+      DB_NAME: "laracom_user"
+      DB_USER: "test"
+      DB_PASSWORD: "test"
     networks:
-      - microservice
-  
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "6831:6831/udp"
-      - "16686:16686"
-    networks:
-      - microservice
+      # 加入网络并指定别名
+      laracom-network:
+        aliases:
+          - "laracom-user-service"
+    deploy:
+      mode: replicated
+      replicas: 3
 
+  # 商品服务
   laracom-product-service:
+    image: laracom/productservice
     depends_on:
       - laracom-product-db
       - etcd1
       - etcd2
       - etcd3
-    build: ./product-service
+      - jaeger
     ports:
       - 9093:9091
     environment:
@@ -116,209 +82,77 @@ services:
       DB_NAME: "laracom_product"
       DB_USER: "product"
       DB_PASSWORD: "test"
+      MICRO_LOG_LEVEL: "debug"
     networks:
-      - microservice
+      laracom_network:
+        aliases:
+          - "laracom-product-service"
+    deploy:
+      mode: replicated
+      replicas: 3
 
-
-  laracom-user-service:
-    depends_on:
-      - laracom-user-db
-      - laracom-nats
-      - etcd1
-      - etcd2
-      - etcd3
-    build: ./user-service
-    ports:
-      - 9092:9091
+  # api服务
+  laracom-micro-api:
+    image: microhq/micro:latest
     environment:
-      MICRO_SERVER_ADDRESS: ":9091"
       MICRO_REGISTRY: "etcd"
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-      MICRO_BROKER: "nats"
-      MICRO_BROKER_ADDRESS: "laracom-nats:4222"
-      DB_HOST: "laracom-user-db:3306"
-      DB_DATABASE: "laracom_user"
-      DB_USER: "test"
-      DB_PASSWORD: "test"
+    ports:
+      - 8080:8080
     networks:
-      - microservice
+      - laracom_network
+    command: api --handler=rpc --namespace=laracom.service
+    deploy:
+      placement:
+        constraints: [node.role == manager]
 
+  # micro注册中心面板
+  laracom-web-dashboard:
+    image: microhq/micro:latest
+    environment:
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
+    ports:
+      - 8082:8082
+    networks:
+      - laracom_network
+    command: web
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  # 用户服务数据库
   laracom-user-db:
     image: mysql:latest
-    container_name: laracom-user-db
     ports:
-      - 3306:3306
+      - 33061:3306
     volumes:
-      - db_data:/var/lib/mysql
-    restart: always
+      - db_user_data:/var/lib/mysql
     environment:
       MYSQL_USER: "test"
       MYSQL_PASSWORD: "test"
       MYSQL_DATABASE: "laracom_user"
       MYSQL_ROOT_PASSWORD: "root"
     networks:
-      - microservice
+      - laracom_network
+    deploy:
+      placement:
+        constraints: [node.role == manager]
 
+  # 商品数据库
   laracom-product-db:
     image: mysql:latest
     ports:
       - 33062:3306
     volumes:
       - db_product_data:/var/lib/mysql
-    restart: always
     environment:
       MYSQL_USER: "product"
       MYSQL_PASSWORD: "test"
       MYSQL_DATABASE: "laracom_product"
       MYSQL_ROOT_PASSWORD: "root"
     networks:
-      - microservice
-
-  laracom-user-cli:
-    build: ./user-cli
-    environment:
-      MICRO_REGISTRY: "etcd"
-      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-    networks:
-      - microservice
-
-  laracom-micro-api:
-    container_name: laracom-micro-api
-    image: micro/micro:v2.9.3
-    environment:
-      MICRO_REGISTRY: "etcd"
-      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-    links:
-      - laracom-user-service
-      - laracom-product-service
-      - laracom-demo-api
-    ports:
-      - 8080:8080
-      - 8082:8082
-    # command: api --handler=rpc --namespace=laracom --type=service --enable_rpc && web
-    command: api --handler=http --namespace=laracom.api
-    networks:
-      - microservice
-
-  laracom-demo-api:
-    build: ./demo-api
-    depends_on:
-      - laracom-service
-    environment:
-      MICRO_REGISTRY: "etcd"
-      MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-      MICRO_TRACE_SERVER: "jaeger:6831"
-    networks:
-      - microservice
-
-  laracom-nats:
-    image: nats:latest
-    ports:
-      - 4222:4222
-    restart: always
-    networks:
-      - microservice
-
-
-  prometheus:
-      image: prom/prometheus:v2.1.0
-      volumes:
-        - ./conf/prometheus/:/etc/prometheus/
-        - prometheus_data:/prometheus
-      command:
-        - '--config.file=/etc/prometheus/prometheus.yml'
-        - '--storage.tsdb.path=/prometheus'
-        - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-        - '--web.console.templates=/usr/share/prometheus/consoles'
-      ports:
-        - 9090:9090
-      links:
-        - cadvisor:cadvisor
-        - alertmanager:alertmanager
-      depends_on:
-        - cadvisor
-      networks:
-        - microservice
-      restart: always
-      #    deploy:
-      #      placement:
-      #        constraints:
-      #          - node.hostname == ${HOSTNAME}
-
-  node-exporter:
-    image: prom/node-exporter
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - --collector.filesystem.ignored-mount-points
-      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-    ports:
-      - 9100:9100
-    networks:
-      - microservice
-    restart: always
+      - laracom_network
     deploy:
-      mode: global
-
-  alertmanager:
-    image: prom/alertmanager
-    ports:
-      - 9993:9093
-    volumes:
-      - ./conf/alertmanager/:/etc/alertmanager/
-    networks:
-      - microservice
-    restart: always
-    command:
-      - '--config.file=/etc/alertmanager/config.yml'
-      - '--storage.path=/alertmanager'
-    #    deploy:
-    #      placement:
-    #        constraints:
-    #          - node.hostname == ${HOSTNAME}
-
-  cadvisor:
-    image: google/cadvisor
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    ports:
-      - 8083:8080
-    networks:
-      - microservice
-    restart: always
-    deploy:
-      mode: global
-
-  grafana:
-    image: grafana/grafana
-    user: "104"
-    depends_on:
-      - prometheus
-    ports:
-      - 3000:3000
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./conf/grafana/provisioning/:/etc/grafana/provisioning/
-    env_file:
-      - ./conf/grafana/config.monitoring
-    networks:
-      - microservice
-    restart: always
-
-
-volumes:
-  db_data: {}
-  db_product_data: {}
-  grafana_data: {}
-  prometheus_data: {}
-
-networks:
-  microservice:
-    external: true
+      placement:
+        constraints: [node.role == manager]
