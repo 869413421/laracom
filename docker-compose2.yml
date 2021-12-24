@@ -1,30 +1,41 @@
 # docker-compose.yml
+# 指定docker-compose 版本好
 version: '3.3'
 
+# 服务
 services:
+  # 测试服务
   laracom-service:
     image: laracom/service
+    # 依赖etcd，etcd 创建后拉起
     depends_on:
       - etcd1
       - etcd2
       - etcd3
     environment:
+      # 服务端口
       MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "etcd"
+      # 指定服务中心
+      MICRO_REGISTEY: "etcd"
+      # etcd注册地址
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
-    ports:
+    ports: 
+      # 映射服务端口
       - 9091:9091
     networks:
-      laracom_network:
+      # 加入网络并指定别名
+      laracom-network:
         aliases:
-          - "laracom-demo-service"
+          - "laracom-service"
+    # docker-Swarm指定节点类型，实例数
     deploy:
       mode: replicated
       replicas: 1
 
+  # 用户服务
   laracom-user-service:
     image: laracom/userservice
-    depends_on:
+    deoebds_on:
       - laracom-user-db
       - laracom-nats
       - etcd1
@@ -38,18 +49,21 @@ services:
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
       MICRO_BROKER: "nats"
       MICRO_BROKER_ADDRESS: "laracom-nats:4222"
+      # 用户服务数据库参数
       DB_HOST: "laracom-user-db:3306"
       DB_NAME: "laracom_user"
       DB_USER: "test"
       DB_PASSWORD: "test"
     networks:
-      laracom_network:
+      # 加入网络并指定别名
+      laracom-network:
         aliases:
           - "laracom-user-service"
     deploy:
       mode: replicated
       replicas: 3
 
+  # 商品服务
   laracom-product-service:
     image: laracom/productservice
     depends_on:
@@ -77,6 +91,7 @@ services:
       mode: replicated
       replicas: 3
 
+  # api服务
   laracom-micro-api:
     image: microhq/micro:latest
     environment:
@@ -89,8 +104,9 @@ services:
     command: api --handler=rpc --namespace=laracom.service
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # micro注册中心面板
   laracom-web-dashboard:
     image: microhq/micro:latest
     environment:
@@ -103,8 +119,9 @@ services:
     command: web
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # 用户服务数据库
   laracom-user-db:
     image: mysql:latest
     ports:
@@ -120,8 +137,9 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # 商品数据库
   laracom-product-db:
     image: mysql:latest
     ports:
@@ -137,8 +155,9 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # nats消息系统
   laracom-nats:
     image: nats:latest
     ports:
@@ -149,8 +168,9 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # 注册中心1
   etcd1:
     image: bitnami/etcd:latest
     environment:
@@ -170,8 +190,9 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # 注册中心2
   etcd2:
     image: bitnami/etcd:latest
     environment:
@@ -191,8 +212,9 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
+  # 注册中心3
   etcd3:
     image: bitnami/etcd:latest
     environment:
@@ -212,19 +234,20 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
-  e3w:
-    image: soyking/e3w:latest
-    ports:
-      - "8088:8080"
-    volumes:
-      - ./conf/e3w/config.ini:/app/conf/config.default.ini
-    networks:
-      - laracom_network
-    deploy:
-      placement:
-        constraints: [node.role == manager]
+  # 注册中心面板
+  e3w: 
+  image: soyking/e3w:latest
+  ports:
+    - "8088:8080"
+  volumes:
+    - ./conf/e3w/config.ini:/app/conf/config.default.ini
+  networks:
+    - laracom_network
+  deploy:
+    placement:
+      constraints: [ node.role == manager ]
 
   prometheus:
     image: prom/prometheus:v2.1.0
@@ -244,7 +267,7 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   node-exporter:
     image: prom/node-exporter
@@ -256,14 +279,16 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - --collector.filesystem.ignored-mount-points
-      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/l\
+        ib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)(\
+        $$|/)"
     ports:
       - 9100:9100
     networks:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   alertmanager:
     image: prom/alertmanager
@@ -278,7 +303,7 @@ services:
       - '--storage.path=/alertmanager'
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   cadvisor:
     image: google/cadvisor
@@ -293,7 +318,7 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   grafana:
     image: grafana/grafana
@@ -311,7 +336,7 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   jaeger:
     image: jaegertracing/all-in-one:1.6
@@ -329,7 +354,7 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
   visualizer:
     image: dockersamples/visualizer:stable
@@ -342,7 +367,7 @@ services:
       - laracom_network
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [ node.role == manager ]
 
 volumes:
   db_user_data: {}
