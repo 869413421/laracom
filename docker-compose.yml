@@ -17,7 +17,7 @@ services:
     networks:
       laracom_network:
         aliases:
-          - "laracom-demo-service"
+          - "laracom-service"
     deploy:
       mode: replicated
       replicas: 1
@@ -78,7 +78,7 @@ services:
       replicas: 3
 
   laracom-micro-api:
-    image: microhq/micro:latest
+    image: micro/micro:v2.9.3
     environment:
       MICRO_REGISTRY: "etcd"
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
@@ -86,13 +86,13 @@ services:
       - 8080:8080
     networks:
       - laracom_network
-    command: api --handler=rpc --namespace=laracom.service
+    command: api --handler=rpc --namespace=laracom --type=service --enable_rpc
     deploy:
       placement:
         constraints: [node.role == manager]
 
   laracom-web-dashboard:
-    image: microhq/micro:latest
+    image: micro/micro:v2.9.3
     environment:
       MICRO_REGISTRY: "etcd"
       MICRO_REGISTRY_ADDRESS: "etcd1:2379,etcd2:2379,etcd3:2379"
