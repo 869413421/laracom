@@ -20,7 +20,7 @@ services:
           - "laracom-service"
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: 3
 
   laracom-user-service:
     image: laracom/userservice
