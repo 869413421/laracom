@@ -4,7 +4,7 @@
 // 	protoc        v3.18.0
 // source: proto/user/user.proto
 
-package laracom_service_user
+package user
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

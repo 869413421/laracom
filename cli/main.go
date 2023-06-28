@@ -6,6 +6,7 @@ import (
 	"github.com/869413421/laracom/service/trace"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/metadata"
+	"github.com/micro/go-plugins/wrapper/breaker/hystrix/v2"
 	traceplugin "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
 	"github.com/opentracing/opentracing-go"
 	"log"
@@ -24,6 +25,7 @@ func main() {
 	service := micro.NewService(
 		micro.Name("laracom.demo.cli"),
 		micro.WrapClient(traceplugin.NewClientWrapper(t)),
+		micro.WrapClient(hystrix.NewClientWrapper()),
 	)
 	service.Init()
 
